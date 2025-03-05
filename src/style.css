@@ -1,0 +1,109 @@
+body {
+    background: #f8f6f4;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 180px;
+    background: #d7ccc8;
+    padding: 10px;
+    box-shadow: 3px 0 5px rgba(0,0,0,0.2);
+}
+
+.sidebar h2 {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+}
+
+.tag {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    background: #fff3e0;
+    border: none;
+    cursor: pointer;
+    margin: 5px 0;
+    font-family: 'Courier New', monospace;
+}
+
+.tag.active {
+    background: #bcaaa4;
+    font-weight: bold;
+}
+
+.main-area {
+    flex-grow: 1;
+    padding: 20px;
+    background: #fffaf5;
+    overflow-y: auto;
+}
+
+.todo-inputs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+input, select, button {
+    padding: 5px;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    background: #fff;
+    border: 1px solid #ccc;
+    margin: 5px 0;
+    padding: 10px;
+    position: relative;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    font-family: 'Courier New', monospace;
+}
+
+li.high {
+    background: #ffebee;
+    border-left: 5px solid #d32f2f;
+}
+
+li.low {
+    background: #e3f2fd;
+    border-left: 5px solid #1976d2;
+}
+
+button {
+    cursor: pointer;
+}
+
+#themeToggle {
+    margin-top: 10px;
+}
+
+/* ダークモード */
+body.dark-mode {
+    background: #2e2e2e;
+    color: #f0f0f0;
+}
+
+body.dark-mode .main-area {
+    background: #424242;
+}
+
+body.dark-mode li {
+    background: #616161;
+    color: #fff;
+}
+
+body.dark-mode input, body.dark-mode select, body.dark-mode button {
+    background: #757575;
+    color: #fff;
+}
