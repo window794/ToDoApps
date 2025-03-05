@@ -1,21 +1,63 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <title>タグフィルタ付きTodoアプリ</title>
+    <title>タグ付きTodoアプリ - Cafe Edition</title>
     <script src="./app.js" defer></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Arial", sans-serif;
             display: flex;
             gap: 16px;
             padding: 20px;
+            background-color: #f5f5f1;
+            color: #2e2e2e;
+            transition: background-color 0.5s, color 0.5s;
         }
         #sidebar {
             width: 150px;
-            border-right: 1px solid #ccc;
+            background-color: #2c5f2d;
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        }
+        .tag {
+            cursor: pointer;
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #3c803d;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .tag:hover, .tag.active {
+            background-color: #a3c293;
+            color: #2c5f2d;
+            font-weight: bold;
         }
         #main {
             flex-grow: 1;
+            background-color: #ffffff;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.5s;
+        }
+        input, select, button {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #2c5f2d;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background-color: #a3c293;
+            color: #2c5f2d;
         }
         ul {
             list-style: none;
@@ -23,76 +65,93 @@
         }
         li {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 8px;
-            border-bottom: 1px solid #ddd;
-            padding: 5px 0;
-        }
-        .todo-content {
-            flex-grow: 1;  /* タスク名が伸びる */
-        }
-        .todo-buttons {
-            display: flex;
-            gap: 4px;
+            align-items: center;
+            padding: 8px;
+            background-color: #f0f0f0;
+            margin-bottom: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
         li.done span {
             text-decoration: line-through;
-            color: gray;
-        }
-        button {
-            white-space: nowrap;
-            padding: 4px 8px;
-        }
-        .tag {
-            cursor: pointer;
-            padding: 5px;
-            background-color: #f0f0f0;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-        .tag.active {
-            font-weight: bold;
-            background-color: #d0e0ff;
+            color: #999;
         }
         .day-box {
-            margin-bottom: 10px;
-            padding: 8px;
+            background-color: #f5f5f1;
+            margin-bottom: 16px;
+            padding: 10px;
             border: 1px solid #ccc;
-            background-color: #f9f9f9;
+            border-radius: 5px;
         }
         .day-header {
+            display: flex;
+            justify-content: space-between;
             font-weight: bold;
-            margin-bottom: 5px;
+            background-color: #3c803d;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .day-header button {
+            background-color: #a3c293;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* ダークモード */
+        body.dark-mode {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+        body.dark-mode #main {
+            background-color: #34495e;
+        }
+        body.dark-mode li {
+            background-color: #3c5060;
+            color: #ecf0f1;
+        }
+        body.dark-mode input, body.dark-mode select, body.dark-mode button {
+            background-color: #3c5060;
+            color: #ecf0f1;
+            border-color: #555;
+        }
+        body.dark-mode .day-box {
+            background-color: #3c5060;
         }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <div class="tag" data-tag="all">すべて</div>
+        <div class="tag" data-tag="all">全て</div>
         <div class="tag" data-tag="today">今日</div>
         <div class="tag" data-tag="week">週間タスク</div>
         <div class="tag" data-tag="InBox">InBox</div>
         <div class="tag" data-tag="仕事">仕事</div>
         <div class="tag" data-tag="プライベート">プライベート</div>
         <div class="tag" data-tag="その他">その他</div>
+        <button onclick="toggleDarkMode()">☀️/🌙</button>
     </div>
 
     <div id="main">
-        <h1>タグ付きTodoアプリ</h1>
-        <div id="regularTodoSection">
-            <input type="text" id="todoInput" placeholder="やることを入力">
-            <input type="date" id="dueDateInput">
-            <select id="tagInput">
-                <option value="InBox">InBox</option>
-                <option value="仕事">仕事</option>
-                <option value="プライベート">プライベート</option>
-                <option value="その他">その他</option>
-            </select>
-            <button id="addButton">追加</button>
-            <ul id="todoList"></ul>
-        </div>
-        <div id="weeklyTodoSection" style="display:none;"></div>
+        <h1>タグ付きTodoアプリ - Cafe Edition</h1>
+        <input type="text" id="todoInput" placeholder="やることを入力">
+        <input type="date" id="dueDateInput">
+        <select id="tagInput">
+            <option value="InBox">InBox</option>
+            <option value="仕事">仕事</option>
+            <option value="プライベート">プライベート</option>
+            <option value="その他">その他</option>
+        </select>
+        <button id="addButton">追加</button>
+
+        <ul id="todoList"></ul>
     </div>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+    </script>
 </body>
 </html>
