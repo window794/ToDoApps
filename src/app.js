@@ -1,11 +1,18 @@
 var _a;
-// Todo一覧（初期読み込み）
 var todos = loadTodos();
-// 初期表示
+var currentFilter = 'all'; // 今の表示対象
 renderTodos();
-// 「追加ボタン」のイベント登録
+// ボタンやタグのイベント登録
 (_a = document.getElementById('addButton')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', addTodo);
-// 新しいTodoを追加
+document.querySelectorAll('.tag').forEach(function (tag) {
+    tag.addEventListener('click', function () {
+        var selectedTag = tag.getAttribute('data-tag') || 'all';
+        currentFilter = selectedTag;
+        document.querySelectorAll('.tag').forEach(function (t) { return t.classList.remove('active'); });
+        tag.classList.add('active');
+        renderTodos();
+    });
+});
 function addTodo() {
     var input = document.getElementById('todoInput');
     var dateInput = document.getElementById('dueDateInput');
@@ -26,17 +33,16 @@ function addTodo() {
     saveTodos();
     renderTodos();
 }
-// Todo一覧を表示する
 function renderTodos() {
     var list = document.getElementById('todoList');
     if (!list)
         return;
     list.innerHTML = '';
-    todos.forEach(function (todo, index) {
+    var filteredTodos = filterTodos();
+    filteredTodos.forEach(function (todo, index) {
         var li = document.createElement('li');
         if (todo.done)
             li.classList.add('done');
-        // チェックボックス＋テキスト＋期日＋タグをまとめる
         var todoContent = document.createElement('div');
         todoContent.classList.add('todo-content');
         var checkbox = document.createElement('input');
@@ -52,7 +58,6 @@ function renderTodos() {
         });
         todoContent.appendChild(checkbox);
         todoContent.appendChild(textSpan);
-        // 削除ボタン
         var deleteButton = document.createElement('button');
         deleteButton.textContent = '削除';
         deleteButton.addEventListener('click', function () {
@@ -60,20 +65,27 @@ function renderTodos() {
             saveTodos();
             renderTodos();
         });
-        li.appendChild(todoContent); // 左側に内容
-        li.appendChild(deleteButton); // 右側に削除ボタン
+        li.appendChild(todoContent);
+        li.appendChild(deleteButton);
         list.appendChild(li);
     });
 }
-// Todoを保存
+function filterTodos() {
+    if (currentFilter === 'all') {
+        return todos;
+    }
+    if (currentFilter === 'today') {
+        var today_1 = new Date().toISOString().split('T')[0];
+        return todos.filter(function (todo) { return todo.dueDate === today_1; });
+    }
+    return todos.filter(function (todo) { return todo.tag === currentFilter; });
+}
 function saveTodos() {
     localStorage.setItem('todos', JSON.stringify(todos));
 }
-// Todoを読み込み（古いデータもInBox補正）
 function loadTodos() {
     var data = localStorage.getItem('todos');
     var parsed = data ? JSON.parse(data) : [];
-    // 過去データの補正（タグがないものはInBoxに）
     parsed.forEach(function (todo) {
         if (!todo.tag) {
             todo.tag = 'InBox';

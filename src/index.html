@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <title>タグ付きTodoアプリ</title>
+    <title>タグフィルタ付きTodoアプリ</title>
     <script src="./app.js" defer></script>
     <style>
         body {
             font-family: Arial, sans-serif;
+            display: flex;
+            gap: 16px;
             padding: 20px;
+        }
+        #sidebar {
+            width: 150px;
+            border-right: 1px solid #ccc;
+        }
+        #main {
+            flex-grow: 1;
         }
         ul {
             list-style: none;
@@ -24,28 +33,49 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-grow: 1;  /* タスク部分が伸びる */
+            flex-grow: 1;
         }
         li.done span {
             text-decoration: line-through;
             color: gray;
         }
         button {
-            white-space: nowrap;  /* ボタンが折り返されない */
+            white-space: nowrap;
+        }
+        .tag {
+            cursor: pointer;
+            padding: 5px;
+            background-color: #f0f0f0;
+            margin-bottom: 5px;
+        }
+        .tag.active {
+            font-weight: bold;
+            background-color: #d0e0ff;
         }
     </style>
 </head>
 <body>
-    <h1>タグ付きTodoアプリ</h1>
-    <input type="text" id="todoInput" placeholder="やることを入力">
-    <input type="date" id="dueDateInput">
-    <select id="tagInput">
-        <option value="InBox">InBox</option>
-        <option value="仕事">仕事</option>
-        <option value="プライベート">プライベート</option>
-        <option value="その他">その他</option>
-    </select>
-    <button id="addButton">追加</button>
-    <ul id="todoList"></ul>
+    <div id="sidebar">
+        <div class="tag" data-tag="all">全て</div>
+        <div class="tag" data-tag="today">今日</div>
+        <div class="tag" data-tag="InBox">InBox</div>
+        <div class="tag" data-tag="仕事">仕事</div>
+        <div class="tag" data-tag="プライベート">プライベート</div>
+        <div class="tag" data-tag="その他">その他</div>
+    </div>
+
+    <div id="main">
+        <h1>タグ付きTodoアプリ</h1>
+        <input type="text" id="todoInput" placeholder="やることを入力">
+        <input type="date" id="dueDateInput">
+        <select id="tagInput">
+            <option value="InBox">InBox</option>
+            <option value="仕事">仕事</option>
+            <option value="プライベート">プライベート</option>
+            <option value="その他">その他</option>
+        </select>
+        <button id="addButton">追加</button>
+        <ul id="todoList"></ul>
+    </div>
 </body>
 </html>
