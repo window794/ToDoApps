@@ -30,10 +30,11 @@
             padding: 5px 0;
         }
         .todo-content {
+            flex-grow: 1;  /* タスク名が伸びる */
+        }
+        .todo-buttons {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-grow: 1;
+            gap: 4px;
         }
         li.done span {
             text-decoration: line-through;
@@ -41,23 +42,36 @@
         }
         button {
             white-space: nowrap;
+            padding: 4px 8px;
         }
         .tag {
             cursor: pointer;
             padding: 5px;
             background-color: #f0f0f0;
             margin-bottom: 5px;
+            text-align: center;
         }
         .tag.active {
             font-weight: bold;
             background-color: #d0e0ff;
         }
+        .day-box {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .day-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <div class="tag" data-tag="all">全て</div>
+        <div class="tag" data-tag="all">すべて</div>
         <div class="tag" data-tag="today">今日</div>
+        <div class="tag" data-tag="week">週間タスク</div>
         <div class="tag" data-tag="InBox">InBox</div>
         <div class="tag" data-tag="仕事">仕事</div>
         <div class="tag" data-tag="プライベート">プライベート</div>
@@ -66,16 +80,19 @@
 
     <div id="main">
         <h1>タグ付きTodoアプリ</h1>
-        <input type="text" id="todoInput" placeholder="やることを入力">
-        <input type="date" id="dueDateInput">
-        <select id="tagInput">
-            <option value="InBox">InBox</option>
-            <option value="仕事">仕事</option>
-            <option value="プライベート">プライベート</option>
-            <option value="その他">その他</option>
-        </select>
-        <button id="addButton">追加</button>
-        <ul id="todoList"></ul>
+        <div id="regularTodoSection">
+            <input type="text" id="todoInput" placeholder="やることを入力">
+            <input type="date" id="dueDateInput">
+            <select id="tagInput">
+                <option value="InBox">InBox</option>
+                <option value="仕事">仕事</option>
+                <option value="プライベート">プライベート</option>
+                <option value="その他">その他</option>
+            </select>
+            <button id="addButton">追加</button>
+            <ul id="todoList"></ul>
+        </div>
+        <div id="weeklyTodoSection" style="display:none;"></div>
     </div>
 </body>
 </html>
