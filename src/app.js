@@ -1,7 +1,11 @@
 var _a;
+// Todo一覧（初期読み込み）
 var todos = loadTodos();
+// 初期表示
 renderTodos();
+// 「追加ボタン」のイベント登録
 (_a = document.getElementById('addButton')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', addTodo);
+// 新しいTodoを追加
 function addTodo() {
     var input = document.getElementById('todoInput');
     var dateInput = document.getElementById('dueDateInput');
@@ -13,15 +17,16 @@ function addTodo() {
     todos.push({
         text: input.value.trim(),
         dueDate: dateInput.value || undefined,
-        tag: tagInput.value || 'InBox', // ここでInBox強制
+        tag: tagInput.value || 'InBox',
         done: false
     });
     input.value = '';
     dateInput.value = '';
-    tagInput.value = 'InBox'; // 選択状態もリセット
+    tagInput.value = 'InBox';
     saveTodos();
     renderTodos();
 }
+// Todo一覧を表示する
 function renderTodos() {
     var list = document.getElementById('todoList');
     if (!list)
@@ -31,6 +36,9 @@ function renderTodos() {
         var li = document.createElement('li');
         if (todo.done)
             li.classList.add('done');
+        // チェックボックス＋テキスト＋期日＋タグをまとめる
+        var todoContent = document.createElement('div');
+        todoContent.classList.add('todo-content');
         var checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = todo.done;
@@ -42,6 +50,9 @@ function renderTodos() {
             saveTodos();
             renderTodos();
         });
+        todoContent.appendChild(checkbox);
+        todoContent.appendChild(textSpan);
+        // 削除ボタン
         var deleteButton = document.createElement('button');
         deleteButton.textContent = '削除';
         deleteButton.addEventListener('click', function () {
@@ -49,16 +60,24 @@ function renderTodos() {
             saveTodos();
             renderTodos();
         });
-        li.appendChild(checkbox);
-        li.appendChild(textSpan);
-        li.appendChild(deleteButton);
+        li.appendChild(todoContent); // 左側に内容
+        li.appendChild(deleteButton); // 右側に削除ボタン
         list.appendChild(li);
     });
 }
+// Todoを保存
 function saveTodos() {
     localStorage.setItem('todos', JSON.stringify(todos));
 }
+// Todoを読み込み（古いデータもInBox補正）
 function loadTodos() {
     var data = localStorage.getItem('todos');
-    return data ? JSON.parse(data) : [];
+    var parsed = data ? JSON.parse(data) : [];
+    // 過去データの補正（タグがないものはInBoxに）
+    parsed.forEach(function (todo) {
+        if (!todo.tag) {
+            todo.tag = 'InBox';
+        }
+    });
+    return parsed;
 }
