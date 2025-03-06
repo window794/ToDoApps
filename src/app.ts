@@ -1,102 +1,110 @@
 type Todo = {
     text: string;
-    dueDate?: string;
+    date?: string;
     tag: string;
-    priority: string;
     done: boolean;
 };
 
-let todos: Todo[] = [];
-let currentFilter = 'all';
-let isDarkMode = false;
+let todos: Todo[] = loadTodos();
+let currentFilter: 'all' | 'today' | 'inbox' | 'work' | 'private' | 'others' = 'all';
 
-window.onload = () => {
-    loadSettings();
-    setupEventListeners();
-    applyDarkMode(); // ここでデザイン＋renderも呼ぶ
-};
+// ✅ 各種ボタンのイベント設定
+document.getElementById('addButton')!.addEventListener('click', addTodo);
+document.getElementById('darkModeToggle')!.addEventListener('click', toggleDarkMode);
 
-function loadSettings() {
-    const saved = localStorage.getItem('todos') || localStorage.getItem('tasks');
-    todos = saved ? JSON.parse(saved).map((t: Partial<Todo>) => ({
-        text: t.text ?? '',
-        dueDate: t.dueDate,
-        tag: t.tag ?? 'InBox',
-        priority: t.priority ?? '中',
-        done: t.done ?? false
-    })) : [];
+document.getElementById('filterAll')!.addEventListener('click', () => changeView('all'));
+document.getElementById('filterToday')!.addEventListener('click', () => changeView('today'));
+document.getElementById('filterInbox')!.addEventListener('click', () => changeView('inbox'));
+document.getElementById('filterWork')!.addEventListener('click', () => changeView('work'));
+document.getElementById('filterPrivate')!.addEventListener('click', () => changeView('private'));
+document.getElementById('filterOthers')!.addEventListener('click', () => changeView('others'));
 
-    isDarkMode = JSON.parse(localStorage.getItem('darkMode') ?? 'false');
+function changeView(filter: typeof currentFilter) {
+    currentFilter = filter;
+    renderTodos();
 }
 
-function setupEventListeners() {
-    document.getElementById('addButton')?.addEventListener('click', addTodo);
-    document.getElementById('themeToggle')?.addEventListener('click', toggleDarkMode);
-    document.querySelectorAll('.tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-            currentFilter = (tag as HTMLElement).dataset.tag ?? 'all';
-            document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
-            tag.classList.add('active');
-            render();
-        });
-    });
-}
-
+// ✅ タスク追加
 function addTodo() {
-    const text = (document.getElementById('todoInput') as HTMLInputElement).value.trim();
-    const dueDate = (document.getElementById('dueDateInput') as HTMLInputElement).value || undefined;
-    const tag = (document.getElementById('tagInput') as HTMLSelectElement).value;
-    const priority = (document.getElementById('priorityInput') as HTMLSelectElement).value;
+    const input = document.getElementById('todoInput') as HTMLInputElement;
+    const dateInput = document.getElementById('dateInput') as HTMLInputElement;
+    const tagSelect = document.getElementById('tagSelect') as HTMLSelectElement;
 
-    if (!text) return alert('タスク名を入力してください');
+    if (input.value.trim() === '') return;
 
-    todos.push({ text, dueDate, tag, priority, done: false });
+    todos.push({
+        text: input.value.trim(),
+        date: dateInput.value || undefined,
+        tag: tagSelect.value,
+        done: false,
+    });
+
+    input.value = '';
+    dateInput.value = '';
+    tagSelect.value = 'InBox';
+
     saveTodos();
-    render();
+    renderTodos();
 }
 
-function render() {
+// ✅ タスク描画
+function renderTodos() {
     const list = document.getElementById('todoList')!;
     list.innerHTML = '';
-    filterTodos().forEach((todo, index) => {
+
+    filteredTodos().forEach((todo, index) => {
         const li = document.createElement('li');
-        li.className = `todo-item ${getPriorityClass(todo.priority)}`;
-        const icon = todo.priority === '高' ? '❗' : todo.priority === '低' ? '↓' : '';
-        li.innerHTML = `${icon} ${todo.text} (${todo.dueDate ?? '期日なし'}) [${todo.tag}]`;
-        li.appendChild(makeButton('編集', () => editTodo(index)));
-        li.appendChild(makeButton('削除', () => {
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = todo.done;
+        checkbox.addEventListener('change', () => {
+            todo.done = checkbox.checked;
+            saveTodos();
+            renderTodos();
+        });
+
+        const span = document.createElement('span');
+        span.textContent = `${todo.text} (${todo.date ?? '期限なし'}) [${todo.tag}]`;
+        if (todo.done) span.style.textDecoration = 'line-through';
+
+        const editButton = document.createElement('button');
+        editButton.textContent = '編集';
+        editButton.onclick = () => editTodo(index);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = '削除';
+        deleteButton.onclick = () => {
             todos.splice(index, 1);
             saveTodos();
-            render();
-        }));
+            renderTodos();
+        };
+
+        li.append(checkbox, span, editButton, deleteButton);
         list.appendChild(li);
     });
 }
 
-function getPriorityClass(priority: string): string {
-    return { 高: 'high', 低: 'low', 中: '' }[priority] ?? '';
-}
-
-function makeButton(label: string, action: () => void): HTMLButtonElement {
-    const button = document.createElement('button');
-    button.textContent = label;
-    button.onclick = action;
-    return button;
-}
-
-function filterTodos(): Todo[] {
-    if (currentFilter === 'all') return todos;
-    if (currentFilter === 'today') return todos.filter(t => t.dueDate === today());
-    if (currentFilter === 'week') return todos.filter(t => isThisWeek(t.dueDate));
-    return todos.filter(t => t.tag === currentFilter);
+function filteredTodos() {
+    const today = new Date().toISOString().split('T')[0];
+    return todos.filter(todo => {
+        switch (currentFilter) {
+            case 'today': return todo.date === today;
+            case 'inbox': return todo.tag === 'InBox';
+            case 'work': return todo.tag === '仕事';
+            case 'private': return todo.tag === 'プライベート';
+            case 'others': return !['InBox', '仕事', 'プライベート'].includes(todo.tag);
+            default: return true;
+        }
+    });
 }
 
 function editTodo(index: number) {
-    const newText = prompt('タスク名を編集', todos[index].text);
-    if (newText) {
-        todos[index].text = newText.trim();
+    const newText = prompt('タスクを編集:', todos[index].text);
+    if (newText !== null) {
+        todos[index].text = newText;
         saveTodos();
-        render();
+        renderTodos();
     }
 }
 
@@ -104,34 +112,23 @@ function saveTodos() {
     localStorage.setItem('todos', JSON.stringify(todos));
 }
 
-function today(): string {
-    return new Date().toISOString().split('T')[0];
+function loadTodos(): Todo[] {
+    return JSON.parse(localStorage.getItem('todos') ?? '[]');
 }
 
-function isThisWeek(date?: string): boolean {
-    if (!date) return false;
-    const target = new Date(date);
-    const monday = getMonday(new Date());
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    return target >= monday && target <= sunday;
-}
-
-function getMonday(date: Date): Date {
-    const day = date.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    date.setDate(date.getDate() + diff);
-    return date;
-}
-
-// ダークモード関連
+// ✅ ダークモード
 function toggleDarkMode() {
-    isDarkMode = !isDarkMode;
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    applyDarkMode();
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode').toString());
 }
 
 function applyDarkMode() {
-    document.body.classList.toggle('dark-mode', isDarkMode);
-    render();  // ← ここ大事
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
 }
+
+applyDarkMode();
+renderTodos();

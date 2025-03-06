@@ -1,28 +1,27 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <title>タグ付きTodoアプリ - Diary Edition</title>
+    <title>タグ付きToDoアプリ - Diary Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="app-container">
-    <aside class="sidebar">
-        <h2>📖 手帳</h2>
-        <button class="tag" data-tag="all">すべて</button>
-        <button class="tag" data-tag="today">今日</button>
-        <button class="tag" data-tag="week">週間タスク</button>
-        <button class="tag" data-tag="InBox">InBox</button>
-        <button class="tag" data-tag="仕事">仕事</button>
-        <button class="tag" data-tag="プライベート">プライベート</button>
-        <button class="tag" data-tag="その他">その他</button>
-        <button id="themeToggle">☀️🌙</button>
-    </aside>
-
-    <main class="main-area">
-        <h1>タグ付きTodoアプリ - Diary Edition</h1>
-        <div class="todo-inputs">
-            <input id="todoInput" type="text" placeholder="やることを入力">
+    <div class="app-container">
+        <aside class="sidebar">
+            <h1>📖 手帳</h1>
+            <button onclick="changeView('all')">すべて</button>
+            <button onclick="changeView('today')">今日</button>
+            <button onclick="changeView('inbox')">InBox</button>
+            <button onclick="changeView('work')">仕事</button>
+            <button onclick="changeView('private')">プライベート</button>
+            <button onclick="changeView('other')">その他</button>
+            <div class="theme-toggle">
+                ☀️🌙
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+            </div>
+        </aside>
+        <main class="main-content">
+            <h2>タグ付きToDoアプリ - Diary Edition</h2>
+            <input id="todoInput" placeholder="やることを入力">
             <input id="dueDateInput" type="date">
             <select id="tagInput">
                 <option>InBox</option>
@@ -35,14 +34,10 @@
                 <option>高</option>
                 <option>低</option>
             </select>
-            <button id="addButton">追加</button>
-        </div>
-
-        <ul id="todoList"></ul>
-    </main>
-
-</div>
-
-<script src="app.js" defer></script>
+            <button onclick="addTodo()">追加</button>
+            <ul id="todoList"></ul>
+        </main>
+    </div>
+    <script src="app.js"></script>
 </body>
 </html>

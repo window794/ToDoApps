@@ -1,124 +1,110 @@
-var todos = [];
+var todos = loadTodos();
 var currentFilter = 'all';
-var isDarkMode = false;
-window.onload = function () {
-    loadSettings();
-    setupEventListeners();
-    applyDarkMode(); // ここでデザイン＋renderも呼ぶ
-};
-function loadSettings() {
-    var _a;
-    var saved = localStorage.getItem('todos') || localStorage.getItem('tasks');
-    todos = saved ? JSON.parse(saved).map(function (t) {
-        var _a, _b, _c, _d;
-        return ({
-            text: (_a = t.text) !== null && _a !== void 0 ? _a : '',
-            dueDate: t.dueDate,
-            tag: (_b = t.tag) !== null && _b !== void 0 ? _b : 'InBox',
-            priority: (_c = t.priority) !== null && _c !== void 0 ? _c : '中',
-            done: (_d = t.done) !== null && _d !== void 0 ? _d : false
-        });
-    }) : [];
-    isDarkMode = JSON.parse((_a = localStorage.getItem('darkMode')) !== null && _a !== void 0 ? _a : 'false');
+// ✅ 各種ボタンのイベント設定
+document.getElementById('addButton').addEventListener('click', addTodo);
+document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+document.getElementById('filterAll').addEventListener('click', function () { return changeView('all'); });
+document.getElementById('filterToday').addEventListener('click', function () { return changeView('today'); });
+document.getElementById('filterInbox').addEventListener('click', function () { return changeView('inbox'); });
+document.getElementById('filterWork').addEventListener('click', function () { return changeView('work'); });
+document.getElementById('filterPrivate').addEventListener('click', function () { return changeView('private'); });
+document.getElementById('filterOthers').addEventListener('click', function () { return changeView('others'); });
+function changeView(filter) {
+    currentFilter = filter;
+    renderTodos();
 }
-function setupEventListeners() {
-    var _a, _b;
-    (_a = document.getElementById('addButton')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', addTodo);
-    (_b = document.getElementById('themeToggle')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', toggleDarkMode);
-    document.querySelectorAll('.tag').forEach(function (tag) {
-        tag.addEventListener('click', function () {
-            var _a;
-            currentFilter = (_a = tag.dataset.tag) !== null && _a !== void 0 ? _a : 'all';
-            document.querySelectorAll('.tag').forEach(function (t) { return t.classList.remove('active'); });
-            tag.classList.add('active');
-            render();
-        });
-    });
-}
+// ✅ タスク追加
 function addTodo() {
-    var text = document.getElementById('todoInput').value.trim();
-    var dueDate = document.getElementById('dueDateInput').value || undefined;
-    var tag = document.getElementById('tagInput').value;
-    var priority = document.getElementById('priorityInput').value;
-    if (!text)
-        return alert('タスク名を入力してください');
-    todos.push({ text: text, dueDate: dueDate, tag: tag, priority: priority, done: false });
+    var input = document.getElementById('todoInput');
+    var dateInput = document.getElementById('dateInput');
+    var tagSelect = document.getElementById('tagSelect');
+    if (input.value.trim() === '')
+        return;
+    todos.push({
+        text: input.value.trim(),
+        date: dateInput.value || undefined,
+        tag: tagSelect.value,
+        done: false,
+    });
+    input.value = '';
+    dateInput.value = '';
+    tagSelect.value = 'InBox';
     saveTodos();
-    render();
+    renderTodos();
 }
-function render() {
+// ✅ タスク描画
+function renderTodos() {
     var list = document.getElementById('todoList');
     list.innerHTML = '';
-    filterTodos().forEach(function (todo, index) {
+    filteredTodos().forEach(function (todo, index) {
         var _a;
         var li = document.createElement('li');
-        li.className = "todo-item ".concat(getPriorityClass(todo.priority));
-        var icon = todo.priority === '高' ? '❗' : todo.priority === '低' ? '↓' : '';
-        li.innerHTML = "".concat(icon, " ").concat(todo.text, " (").concat((_a = todo.dueDate) !== null && _a !== void 0 ? _a : '期日なし', ") [").concat(todo.tag, "]");
-        li.appendChild(makeButton('編集', function () { return editTodo(index); }));
-        li.appendChild(makeButton('削除', function () {
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = todo.done;
+        checkbox.addEventListener('change', function () {
+            todo.done = checkbox.checked;
+            saveTodos();
+            renderTodos();
+        });
+        var span = document.createElement('span');
+        span.textContent = "".concat(todo.text, " (").concat((_a = todo.date) !== null && _a !== void 0 ? _a : '期限なし', ") [").concat(todo.tag, "]");
+        if (todo.done)
+            span.style.textDecoration = 'line-through';
+        var editButton = document.createElement('button');
+        editButton.textContent = '編集';
+        editButton.onclick = function () { return editTodo(index); };
+        var deleteButton = document.createElement('button');
+        deleteButton.textContent = '削除';
+        deleteButton.onclick = function () {
             todos.splice(index, 1);
             saveTodos();
-            render();
-        }));
+            renderTodos();
+        };
+        li.append(checkbox, span, editButton, deleteButton);
         list.appendChild(li);
     });
 }
-function getPriorityClass(priority) {
-    var _a;
-    return (_a = { 高: 'high', 低: 'low', 中: '' }[priority]) !== null && _a !== void 0 ? _a : '';
-}
-function makeButton(label, action) {
-    var button = document.createElement('button');
-    button.textContent = label;
-    button.onclick = action;
-    return button;
-}
-function filterTodos() {
-    if (currentFilter === 'all')
-        return todos;
-    if (currentFilter === 'today')
-        return todos.filter(function (t) { return t.dueDate === today(); });
-    if (currentFilter === 'week')
-        return todos.filter(function (t) { return isThisWeek(t.dueDate); });
-    return todos.filter(function (t) { return t.tag === currentFilter; });
+function filteredTodos() {
+    var today = new Date().toISOString().split('T')[0];
+    return todos.filter(function (todo) {
+        switch (currentFilter) {
+            case 'today': return todo.date === today;
+            case 'inbox': return todo.tag === 'InBox';
+            case 'work': return todo.tag === '仕事';
+            case 'private': return todo.tag === 'プライベート';
+            case 'others': return !['InBox', '仕事', 'プライベート'].includes(todo.tag);
+            default: return true;
+        }
+    });
 }
 function editTodo(index) {
-    var newText = prompt('タスク名を編集', todos[index].text);
-    if (newText) {
-        todos[index].text = newText.trim();
+    var newText = prompt('タスクを編集:', todos[index].text);
+    if (newText !== null) {
+        todos[index].text = newText;
         saveTodos();
-        render();
+        renderTodos();
     }
 }
 function saveTodos() {
     localStorage.setItem('todos', JSON.stringify(todos));
 }
-function today() {
-    return new Date().toISOString().split('T')[0];
+function loadTodos() {
+    var _a;
+    return JSON.parse((_a = localStorage.getItem('todos')) !== null && _a !== void 0 ? _a : '[]');
 }
-function isThisWeek(date) {
-    if (!date)
-        return false;
-    var target = new Date(date);
-    var monday = getMonday(new Date());
-    var sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    return target >= monday && target <= sunday;
-}
-function getMonday(date) {
-    var day = date.getDay();
-    var diff = day === 0 ? -6 : 1 - day;
-    date.setDate(date.getDate() + diff);
-    return date;
-}
-// ダークモード関連
+// ✅ ダークモード
 function toggleDarkMode() {
-    isDarkMode = !isDarkMode;
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    applyDarkMode();
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode').toString());
 }
 function applyDarkMode() {
-    document.body.classList.toggle('dark-mode', isDarkMode);
-    render(); // ← ここ大事
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
+    else {
+        document.body.classList.remove('dark-mode');
+    }
 }
+applyDarkMode();
+renderTodos();
